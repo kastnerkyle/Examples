@@ -1,0 +1,36 @@
+#Makefile for compiling an executable that uses pkg-config.
+#CC – the compiler’s executable (usually gcc)
+#TARGET – the name of the final, compiled result
+#SRCDIR – the directory your source files are in
+#SRCEXT – the extension shared by your source files (use cpp for C++ projects)
+#BUILDDIR – where compiled objects are placed. This shouldn’t exist before compiling
+
+#Special characters 
+#@ runs the commands in the shell 
+#$@ is our target
+#$< is all dependencies
+#$^ is the first dependency only 
+
+CC := gcc
+PKGS := ...
+SRCDIR := src
+BUILDDIR := build
+CFLAGS := -g -Wall `pkg-config --cflags $(PKGS)`
+LIBS := `pkg-config --libs $(PKGS)`
+TARGET := program
+ 
+SRCEXT = c
+SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
+ 
+$(TARGET): $(OBJECTS)
+    @echo " Linking..."; $(CC) $^ -o $(TARGET) $(LIBS)
+ 
+$(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
+    @mkdir -p $(BUILDDIR)
+    @echo " CC $<"; $(CC) $(CFLAGS) -c -o $@ $<
+ 
+clean:
+    @echo " Cleaning..."; $(RM) -r $(BUILDDIR) $(TARGET)
+ 
+.PHONY: clean

@@ -1,0 +1,40 @@
+#Generic makefile for compiling a shared library with pkg-config.
+#CC – the compiler’s executable (usually gcc)
+#TARGET – the name of the final, compiled result
+#SRCDIR – the directory your source files are in
+#SRCEXT – the extension shared by your source files (use cpp for C++ projects)
+#BUILDDIR – where compiled objects are placed. This shouldn’t exist before compiling
+
+#Special characters 
+#@ runs the commands in the shell 
+#$@ is our target
+#$< is all dependencies
+#$^ is the first dependency only 
+
+#Change LIBNAME to change the name of the library
+
+CC := gcc
+PKGS := ...
+LIBNAME := mylib
+SRCDIR := src
+BUILDDIR := build
+CFLAGS := -g -Wall `pkg-config --cflags $(PKGS)`
+LIBS := `pkg-config --libs $(PKGS)`
+TARGET := lib$(LIBNAME).so
+LDFLAGS := -shared -Wl,-soname=$(TARGET)
+ 
+SRCEXT = c
+SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
+ 
+$(TARGET): $(OBJECTS)
+    @echo " Linking..."; $(CC) $(LDFLAGS) $^ -o $(TARGET) $(LIBS)
+ 
+$(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
+    @mkdir -p $(BUILDDIR)
+    @echo " CC $<"; $(CC) $(CFLAGS) -c -o $@ $<
+ 
+clean:
+    @echo " Cleaning..."; $(RM) -r $(BUILDDIR) $(TARGET)
+ 
+.PHONY: clean
